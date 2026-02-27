@@ -82,14 +82,14 @@ class PNH_VipManager
 		m_VipExpirationDates.Clear();
 		m_GlobalRestrictedItems.Clear();
 
-		int curY, curM, curD;
-		GetYearMonthDayUTC(curY, curM, curD);
+		int cY, cM, cD;
+		GetYearMonthDayUTC(cY, cM, cD);
 
-		if (m_Config.Sistema_VIP && m_Config.Sistema_VIP.Categorias && m_Config.Sistema_VIP.JogadoresAtivos)
+		if (m_Config.Sistema_VIP && m_Config.Sistema_VIP.JogadoresAtivos)
 		{
 			foreach (PNH_VipPlayerData player : m_Config.Sistema_VIP.JogadoresAtivos)
 			{
-				if (IsDateExpired(player.DataVencimento, curY, curM, curD)) continue;
+				if (IsDateExpired(player.DataVencimento, cY, cM, cD)) continue;
 				m_ActiveVIPs.Insert(player.Steam64ID, player.Categoria);
 				m_VipExpirationDates.Insert(player.Steam64ID, player.DataVencimento);
 				PNH_VipTierData tier = m_Config.Sistema_VIP.Categorias.Get(player.Categoria);
@@ -114,7 +114,7 @@ class PNH_VipManager
 
 				foreach (PNH_VipDonatorData donator : package.DoadoresAtivos)
 				{
-					if (IsDateExpired(donator.DataVencimento, curY, curM, curD)) continue;
+					if (IsDateExpired(donator.DataVencimento, cY, cM, cD)) continue;
 					array<string> allowed;
 					if (!m_ActivePrivateItems.Find(donator.Steam64ID, allowed))
 					{
@@ -147,7 +147,6 @@ class PNH_VipManager
 	}
 
 	bool IsVip(string uid) { return m_ActiveVIPs.Contains(uid); }
-	bool HasQueuePriority(string uid) { return m_QueuePriority.Contains(uid); }
 	bool HasSkinPanelAccess(string uid) { return m_SkinPanelAccess.Contains(uid); }
 	string GetVipExpirationDate(string uid) { string d; m_VipExpirationDates.Find(uid, d); return d; }
 	string GetVipTier(string uid) { string t; m_ActiveVIPs.Find(uid, t); return t; }
