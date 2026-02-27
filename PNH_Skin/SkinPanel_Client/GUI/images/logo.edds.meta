@@ -1,0 +1,16 @@
+MetaFileClass {
+ Name "{A443B89E76C59647}SkinPanel_Client/GUI/images/Logo.edds"
+ Author "desktop-ng0j8cm"
+ ChangeDate -592104821
+ Configurations {
+  PNGResourceClass PC {
+   SourceFile "Logo.png"
+  }
+  PNGResourceClass XBOX_ONE : PC {
+  }
+  PNGResourceClass PS4 : PC {
+  }
+  PNGResourceClass LINUX : PC {
+  }
+ }
+}
