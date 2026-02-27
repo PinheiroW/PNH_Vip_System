@@ -89,19 +89,19 @@ class PNH_VipManager
 		{
 			foreach (PNH_VipPlayerData player : m_Config.Sistema_VIP.JogadoresAtivos)
 			{
-				string cleanUID = player.Steam64ID;
-				cleanUID.Trim(); // Remove espaços acidentais
+				string uid = player.Steam64ID;
+				uid.Trim();
 
 				if (IsDateExpired(player.DataVencimento, cY, cM, cD)) continue;
 				
-				m_ActiveVIPs.Insert(cleanUID, player.Categoria);
-				m_VipExpirationDates.Insert(cleanUID, player.DataVencimento);
+				m_ActiveVIPs.Insert(uid, player.Categoria);
+				m_VipExpirationDates.Insert(uid, player.DataVencimento);
 				
 				PNH_VipTierData tier = m_Config.Sistema_VIP.Categorias.Get(player.Categoria);
 				if (tier)
 				{
-					if (tier.FilaPrioridade) m_QueuePriority.Insert(cleanUID, true);
-					if (tier.AcessoSkinPanel) m_SkinPanelAccess.Insert(cleanUID, true);
+					if (tier.FilaPrioridade) m_QueuePriority.Insert(uid, true);
+					if (tier.AcessoSkinPanel) m_SkinPanelAccess.Insert(uid, true);
 				}
 			}
 		}
@@ -140,7 +140,6 @@ class PNH_VipManager
 				}
 			}
 		}
-		PNH_Logger.Log("VIP_System", "Configuracoes processadas com sucesso.");
 	}
 
 	bool IsDateExpired(string dateStr, int cY, int cM, int cD)
@@ -149,6 +148,7 @@ class PNH_VipManager
 		dateStr.Split("/", p);
 		if (p.Count() != 3) return true;
 		int eD = p[0].ToInt(); int eM = p[1].ToInt(); int eY = p[2].ToInt();
+		
 		if (cY > eY) return true;
 		if (cY == eY && cM > eM) return true;
 		if (cY == eY && cM == eM && cD > eD) return true;
