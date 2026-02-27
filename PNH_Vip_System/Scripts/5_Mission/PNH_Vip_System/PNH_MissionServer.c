@@ -6,36 +6,36 @@ modded class MissionServer
 		PNH_VipManager.GetInstance();
 	}
 
-	override void OnChatMessage(int chatChannel, PlayerIdentity identity, string input)
+	override void OnEvent(EventType eventTypeId, Param params)
 	{
-		super.OnChatMessage(chatChannel, identity, input);
+		super.OnEvent(eventTypeId, params);
 
-		if (input == "!vipsreload")
+		if (eventTypeId == ChatMessageEventTypeID)
 		{
-			PNH_VipManager.GetInstance().LoadConfig();
-			
-			array<Man> players = new array<Man>;
-			GetGame().GetPlayers(players);
-			foreach (Man p : players)
+			ChatMessageEventParams chatData = ChatMessageEventParams.Cast(params);
+			if (chatData.param3 == "!vipsreload")
 			{
-				PlayerBase pb = PlayerBase.Cast(p);
-				if (pb && pb.GetIdentity()) SyncVipData(pb, pb.GetIdentity());
+				PNH_VipManager.GetInstance().LoadConfig();
+				array<Man> players = new array<Man>;
+				GetGame().GetPlayers(players);
+				foreach (Man p : players)
+				{
+					PlayerBase pb = PlayerBase.Cast(p);
+					if (pb && pb.GetIdentity()) SyncVipData(pb, pb.GetIdentity());
+				}
+				PNH_Logger.Log("VIP_System", "Ficheiro JSON recarregado via comando.");
 			}
-			PNH_Logger.Log("VIP_System", "Reload efetuado por: " + identity.GetName());
 		}
 	}
 
 	void SyncVipData(PlayerBase player, PlayerIdentity identity)
 	{
 		string uid = identity.GetId();
-
-		// Sincronização do Bloqueio (RPC 99955)
 		ref array<string> restricted = PNH_VipManager.GetInstance().GetGlobalRestrictedList();
 		ref array<string> allowed = PNH_VipManager.GetInstance().GetPrivateItems(uid);
 		Param2<ref array<string>, ref array<string>> syncData = new Param2<ref array<string>, ref array<string>>(restricted, allowed);
 		GetGame().RPCSingleParam(player, 99955, syncData, true, identity);
 
-		// Sincronização SkinPanel (RPC ID: 9991)
 		bool hasAccess = PNH_VipManager.GetInstance().HasSkinPanelAccess(uid);
 		Param1<bool> skinParam = new Param1<bool>(hasAccess);
 		PNH_RpcManager.Get().SendRPC(9991, skinParam, true, identity);

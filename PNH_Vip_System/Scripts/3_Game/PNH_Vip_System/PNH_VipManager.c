@@ -91,12 +91,9 @@ class PNH_VipManager
 			{
 				string uid = player.Steam64ID;
 				uid.Trim();
-
 				if (IsDateExpired(player.DataVencimento, cY, cM, cD)) continue;
-				
 				m_ActiveVIPs.Insert(uid, player.Categoria);
 				m_VipExpirationDates.Insert(uid, player.DataVencimento);
-				
 				PNH_VipTierData tier = m_Config.Sistema_VIP.Categorias.Get(player.Categoria);
 				if (tier)
 				{
@@ -121,9 +118,7 @@ class PNH_VipManager
 				{
 					string dUID = donator.Steam64ID;
 					dUID.Trim();
-
 					if (IsDateExpired(donator.DataVencimento, cY, cM, cD)) continue;
-					
 					array<string> allowed;
 					if (!m_ActivePrivateItems.Find(dUID, allowed))
 					{
@@ -148,7 +143,6 @@ class PNH_VipManager
 		dateStr.Split("/", p);
 		if (p.Count() != 3) return true;
 		int eD = p[0].ToInt(); int eM = p[1].ToInt(); int eY = p[2].ToInt();
-		
 		if (cY > eY) return true;
 		if (cY == eY && cM > eM) return true;
 		if (cY == eY && cM == eM && cD > eD) return true;

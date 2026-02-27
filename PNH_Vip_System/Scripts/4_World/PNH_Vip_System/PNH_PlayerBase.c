@@ -12,15 +12,12 @@ modded class PlayerBase
 	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)
 	{
 		super.OnRPC(sender, rpc_type, ctx);
-		
 		if (GetGame().IsClient() && rpc_type == 99955)
 		{
 			Param2<ref array<string>, ref array<string>> data = new Param2<ref array<string>, ref array<string>>(null, null);
 			if (!ctx.Read(data)) return;
-			
 			m_LocalRestrictedList.Clear();
 			m_LocalAllowedItems.Clear();
-			
 			m_LocalRestrictedList = data.param1;
 			m_LocalAllowedItems = data.param2;
 		}
@@ -29,16 +26,13 @@ modded class PlayerBase
 	bool CanLootPrivateItem(EntityAI item)
 	{
 		if (!item) return true;
-		
 		string itemName = item.GetType();
 		itemName.ToLower();
-
 		if (m_LocalRestrictedList && m_LocalRestrictedList.Find(itemName) != -1)
 		{
 			if (m_LocalAllowedItems && m_LocalAllowedItems.Find(itemName) != -1) return true;
 			return false; 
 		}
-		
 		return true;
 	}
 
