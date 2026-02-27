@@ -62,6 +62,7 @@ class PNH_VipManager
 
 		PNH_VipPackageData pack1 = new PNH_VipPackageData();
 		pack1.NomeDoPacote = "PACOTE_ASSAULT";
+		pack1.AcessoSkinPanel = true;
 		pack1.ItensPermitidos.Insert("M4A1");
 		
 		PNH_VipDonatorData d1 = new PNH_VipDonatorData();
@@ -138,8 +139,9 @@ class PNH_VipManager
 		dateStr.Split("/", p);
 		if (p.Count() != 3) return true;
 		int eD = p[0].ToInt(); int eM = p[1].ToInt(); int eY = p[2].ToInt();
+		
 		if (cY > eY) return true;
-		if (curYear == expYear && curMonth > expMonth) return true;
+		if (cY == eY && cM > eM) return true;
 		if (cY == eY && cM == eM && cD > eD) return true;
 		return false;
 	}

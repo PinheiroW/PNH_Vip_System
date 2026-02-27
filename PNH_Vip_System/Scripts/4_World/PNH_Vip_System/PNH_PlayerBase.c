@@ -15,7 +15,6 @@ modded class PlayerBase
 		
 		if (GetGame().IsClient() && rpc_type == 99955)
 		{
-			// Sincronização robusta de listas
 			Param2<ref array<string>, ref array<string>> data = new Param2<ref array<string>, ref array<string>>(null, null);
 			if (!ctx.Read(data)) return;
 			
@@ -31,12 +30,9 @@ modded class PlayerBase
 		string itemName = item.GetType();
 		itemName.ToLower();
 
-		// Se o item está na lista global de bloqueados
 		if (m_LocalRestrictedList && m_LocalRestrictedList.Find(itemName) != -1)
 		{
-			// Só deixa pegar se o jogador tiver permissão específica
 			if (m_LocalAllowedItems && m_LocalAllowedItems.Find(itemName) != -1) return true;
-			
 			return false; 
 		}
 		

@@ -9,8 +9,6 @@ modded class MissionServer
 	override void StartingEquipSetup(PlayerBase player, bool clothesChosen)
 	{
 		super.StartingEquipSetup(player, clothesChosen);
-
-		// Damos um pequeno delay para garantir que a Identity do jogador está pronta
 		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.ProcessVipSpawn, 100, false, player);
 	}
 
@@ -39,16 +37,15 @@ modded class MissionServer
 		{
 			string uid = identity.GetId();
 
-			// 1. Sincronização do Bloqueio de Itens (RPC 99955)
+			// 1. Sincronização do Bloqueio de Itens
 			ref array<string> restricted = PNH_VipManager.GetInstance().GetGlobalRestrictedList();
 			ref array<string> allowed = PNH_VipManager.GetInstance().GetPrivateItems(uid);
 			
-			// Declaração simplificada para evitar erro de sintaxe
 			Param2<ref array<string>, ref array<string>> syncData;
 			syncData = new Param2<ref array<string>, ref array<string>>(restricted, allowed);
 			GetGame().RPCSingleParam(player, 99955, syncData, true, identity);
 
-			// 2. Autorização do Painel de Skins (RPC do teu mod de Skin)
+			// 2. Autorização do Painel de Skins
 			string skinMod = "PNH_Skin";
 			string skinMethod = "InitData";
 			bool hasAccess = PNH_VipManager.GetInstance().HasSkinPanelAccess(uid);
