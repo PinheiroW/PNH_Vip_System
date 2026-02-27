@@ -10,7 +10,6 @@ modded class MissionServer
 	{
 		super.StartingEquipSetup(player, clothesChosen);
 
-		// Usamos o Identity direto para garantir que o UID seja lido no respawn
 		PlayerIdentity identity = player.GetIdentity();
 		if (identity)
 		{
@@ -22,7 +21,7 @@ modded class MissionServer
 				{
 					player.RemoveAllItems();
 					foreach (string itm : items) { player.GetInventory().CreateInInventory(itm); }
-					PNH_Logger.Log("VIP_System", "Spawn VIP processado para: " + identity.GetName());
+					PNH_Logger.Log("VIP_System", "Equipamento VIP entregue: " + identity.GetName());
 				}
 			}
 		}
@@ -33,7 +32,6 @@ modded class MissionServer
 		super.InvokeOnConnect(player, identity);
 		if (player && identity)
 		{
-			// Envia as listas de restrição para o cliente do jogador sincronizar
 			auto params = new Param2<array<string>, array<string>>(
 				PNH_VipManager.GetInstance().GetGlobalRestrictedList(),
 				PNH_VipManager.GetInstance().GetPrivateItems(identity.GetId())

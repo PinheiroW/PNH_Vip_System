@@ -10,7 +10,7 @@ class PNH_VipManager
 	ref map<string, bool> m_SkinPanelAccess;
 	ref map<string, bool> m_QueuePriority;
 	ref map<string, string> m_VipExpirationDates;
-	ref array<string> m_GlobalRestrictedItems; // Lista de TUDO que é restrito no server
+	ref array<string> m_GlobalRestrictedItems;
 
 	void PNH_VipManager()
 	{
@@ -45,6 +45,33 @@ class PNH_VipManager
 		ProcessConfig();
 	}
 
+	void CreateDefaultConfig()
+	{
+		PNH_VipTierData gold = new PNH_VipTierData();
+		gold.FilaPrioridade = true;
+		gold.AcessoSkinPanel = true;
+		gold.RoupasEItens.Insert("GhillieSuit_Woodland");
+		m_Config.Sistema_VIP.Categorias.Insert("VIPGOLD", gold);
+
+		PNH_VipPlayerData p1 = new PNH_VipPlayerData();
+		p1.Nome = "Pinheiro";
+		p1.Steam64ID = "76561198000000000";
+		p1.Categoria = "VIPGOLD";
+		p1.DataVencimento = "20/06/2026";
+		m_Config.Sistema_VIP.JogadoresAtivos.Insert(p1);
+
+		PNH_VipPackageData pack1 = new PNH_VipPackageData();
+		pack1.NomeDoPacote = "PACOTE_ASSAULT";
+		pack1.ItensPermitidos.Insert("M4A1");
+		
+		PNH_VipDonatorData d1 = new PNH_VipDonatorData();
+		d1.Nome = "Pinheiro";
+		d1.Steam64ID = "76561198000000000";
+		d1.DataVencimento = "20/06/2026";
+		pack1.DoadoresAtivos.Insert(d1);
+		m_Config.Sistema_ItensPrivados.Insert(pack1);
+	}
+
 	void ProcessConfig()
 	{
 		m_ActiveVIPs.Clear();
@@ -77,7 +104,6 @@ class PNH_VipManager
 		{
 			foreach (PNH_VipPackageData package : m_Config.Sistema_ItensPrivados)
 			{
-				// Alimenta a lista global de restrições
 				foreach (string restricted : package.ItensPermitidos)
 				{
 					string lowItem = restricted;
@@ -104,7 +130,6 @@ class PNH_VipManager
 				}
 			}
 		}
-		PNH_Logger.Log("VIP_System", "Ficheiro JSON lido e UIDs validados com sucesso na memoria.");
 	}
 
 	bool IsDateExpired(string dateStr, int cY, int cM, int cD)
@@ -120,6 +145,7 @@ class PNH_VipManager
 	}
 
 	bool IsVip(string uid) { return m_ActiveVIPs.Contains(uid); }
+	bool HasQueuePriority(string uid) { return m_QueuePriority.Contains(uid); }
 	bool HasSkinPanelAccess(string uid) { return m_SkinPanelAccess.Contains(uid); }
 	string GetVipExpirationDate(string uid) { string d; m_VipExpirationDates.Find(uid, d); return d; }
 	string GetVipTier(string uid) { string t; m_ActiveVIPs.Find(uid, t); return t; }
