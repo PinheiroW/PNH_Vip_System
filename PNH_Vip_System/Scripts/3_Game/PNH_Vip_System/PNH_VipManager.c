@@ -85,7 +85,7 @@ class PNH_VipManager
 		int curY, curM, curD;
 		GetYearMonthDayUTC(curY, curM, curD);
 
-		if (m_Config.Sistema_VIP && m_Config.Sistema_VIP.JogadoresAtivos)
+		if (m_Config.Sistema_VIP && m_Config.Sistema_VIP.Categorias && m_Config.Sistema_VIP.JogadoresAtivos)
 		{
 			foreach (PNH_VipPlayerData player : m_Config.Sistema_VIP.JogadoresAtivos)
 			{

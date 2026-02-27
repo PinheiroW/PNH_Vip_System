@@ -9,7 +9,8 @@ modded class MissionServer
 	override void StartingEquipSetup(PlayerBase player, bool clothesChosen)
 	{
 		super.StartingEquipSetup(player, clothesChosen);
-		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.ProcessVipSpawn, 100, false, player);
+		// Pequeno delay para garantir que o Identity está carregado no spawn
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.ProcessVipSpawn, 200, false, player);
 	}
 
 	void ProcessVipSpawn(PlayerBase player)
@@ -24,7 +25,7 @@ modded class MissionServer
 			{
 				player.RemoveAllItems();
 				foreach (string itm : items) { player.GetInventory().CreateInInventory(itm); }
-				PNH_Logger.Log("VIP_System", "Spawn VIP processado: " + player.GetIdentity().GetName());
+				PNH_Logger.Log("VIP_System", "Entrega VIP executada para: " + player.GetIdentity().GetName());
 			}
 		}
 	}
@@ -37,23 +38,24 @@ modded class MissionServer
 		{
 			string uid = identity.GetId();
 
-			// 1. Sincronização do Bloqueio de Itens
+			// 1. Sincronização do Bloqueio de Itens (RPC 99955)
 			ref array<string> restricted = PNH_VipManager.GetInstance().GetGlobalRestrictedList();
 			ref array<string> allowed = PNH_VipManager.GetInstance().GetPrivateItems(uid);
-			
-			Param2<ref array<string>, ref array<string>> syncData;
-			syncData = new Param2<ref array<string>, ref array<string>>(restricted, allowed);
+			Param2<ref array<string>, ref array<string>> syncData = new Param2<ref array<string>, ref array<string>>(restricted, allowed);
 			GetGame().RPCSingleParam(player, 99955, syncData, true, identity);
 
-			// 2. Autorização do Painel de Skins
-			string skinMod = "PNH_Skin";
-			string skinMethod = "InitData";
+			// 2. Autorização do Painel de Skins via Framework
 			bool hasAccess = PNH_VipManager.GetInstance().HasSkinPanelAccess(uid);
-			
 			Param1<bool> skinParam = new Param1<bool>(hasAccess);
-			PNH_RpcManager.Get().SendRPC(skinMod, skinMethod, skinParam, true, identity);
 			
-			PNH_Logger.Log("VIP_System", "Permissoes sincronizadas para: " + identity.GetName());
+			// Chamada corrigida para usar o PNH_RpcManager da Framework sem conflitos de tipo
+			PNH_RpcManager frameworkRPC = PNH_RpcManager.Get();
+			if (frameworkRPC)
+			{
+				frameworkRPC.SendRPC("PNH_Skin", "InitData", skinParam, true, identity);
+			}
+			
+			PNH_Logger.Log("VIP_System", "Permissoes sincronizadas: " + identity.GetName());
 		}
 	}
 }
