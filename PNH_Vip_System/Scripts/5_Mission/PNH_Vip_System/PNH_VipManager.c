@@ -2,9 +2,9 @@ class PNH_VipManager
 {
 	private static ref PNH_VipManager m_Instance;
 
-	// O arquivo será salvo na pasta de profiles do servidor
+	// Caminhos declarados de forma absoluta para o compilador do DayZ aceitar
 	const string CONFIG_FOLDER = "$profile:PNH/Vips/";
-	const string CONFIG_PATH = CONFIG_FOLDER + "PNH_Vip_Config.json";
+	const string CONFIG_PATH = "$profile:PNH/Vips/PNH_Vip_Config.json";
 
 	ref PNH_VipConfig m_Config;
 
@@ -44,12 +44,12 @@ class PNH_VipManager
 
 		m_Config = new PNH_VipConfig();
 
-		// Se o arquivo não existir, criamos um de exemplo para o dono do servidor
+		// Se o ficheiro não existir, criamos um de exemplo para o dono do servidor
 		if (!FileExist(CONFIG_PATH))
 		{
 			CreateDefaultConfig();
 			JsonFileLoader<PNH_VipConfig>.JsonSaveFile(CONFIG_PATH, m_Config);
-			PNH_Logger.Log("[PNH_Vip_System] Novo arquivo PNH_Vip_Config.json gerado!");
+			PNH_Logger.Log("VIP_System", "Novo ficheiro PNH_Vip_Config.json gerado!");
 		}
 		else
 		{
@@ -116,7 +116,7 @@ class PNH_VipManager
 			{
 				if (IsDateExpired(player.DataVencimento, currentYear, currentMonth, currentDay))
 				{
-					PNH_Logger.Log("[PNH_Vip_System] VIP Expirado! Jogador: " + player.Nome + " (" + player.Steam64ID + ") Vencimento: " + player.DataVencimento);
+					PNH_Logger.Log("VIP_System", "VIP Expirado! Jogador: " + player.Nome + " (" + player.Steam64ID + ") Vencimento: " + player.DataVencimento);
 					continue;
 				}
 
@@ -142,7 +142,7 @@ class PNH_VipManager
 				{
 					if (IsDateExpired(donator.DataVencimento, currentYear, currentMonth, currentDay))
 					{
-						PNH_Logger.Log("[PNH_Vip_System] Pacote Privado Expirado! Jogador: " + donator.Nome + " (" + donator.Steam64ID + ")");
+						PNH_Logger.Log("VIP_System", "Pacote Privado Expirado! Jogador: " + donator.Nome + " (" + donator.Steam64ID + ")");
 						continue;
 					}
 
@@ -171,7 +171,7 @@ class PNH_VipManager
 			}
 		}
 		
-		PNH_Logger.Log("[PNH_Vip_System] Arquivo JSON lido e UIDs validados com sucesso na memoria.");
+		PNH_Logger.Log("VIP_System", "Ficheiro JSON lido e UIDs validados com sucesso na memoria.");
 	}
 
 	bool IsDateExpired(string expDateStr, int curYear, int curMonth, int curDay)
@@ -253,5 +253,21 @@ class PNH_VipManager
 			return items;
 		}
 		return new array<string>;
+	}
+
+    // Nova função para gerar uma lista mestra de todos os itens restritos
+	bool IsItemRestrictedGlobally(string itemName)
+	{
+		if (m_Config && m_Config.Sistema_ItensPrivados)
+		{
+			foreach (PNH_VipPackageData package : m_Config.Sistema_ItensPrivados)
+			{
+				if (package.ItensPermitidos && package.ItensPermitidos.Find(itemName) != -1)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }
