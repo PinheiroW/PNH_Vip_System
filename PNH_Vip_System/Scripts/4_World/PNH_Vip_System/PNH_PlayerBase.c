@@ -12,8 +12,10 @@ modded class PlayerBase
 	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)
 	{
 		super.OnRPC(sender, rpc_type, ctx);
+		
 		if (GetGame().IsClient())
 		{
+			// Sincronização das listas de itens VIP
 			if (rpc_type == 99955)
 			{
 				Param2<array<string>, array<string>> data;
@@ -27,14 +29,19 @@ modded class PlayerBase
 	bool CanLootPrivateItem(EntityAI item)
 	{
 		if (!item) return true;
+		
 		string itemName = item.GetType();
 		itemName.ToLower();
 
-		if (m_LocalRestrictedList.Find(itemName) != -1)
+		// Se o item estiver na lista de restrições globais
+		if (m_LocalRestrictedList && m_LocalRestrictedList.Find(itemName) != -1)
 		{
-			if (m_LocalAllowedItems.Find(itemName) != -1) return true;
+			// Só permite pegar se estiver na lista de permitidos do jogador
+			if (m_LocalAllowedItems && m_LocalAllowedItems.Find(itemName) != -1) return true;
+			
 			return false; 
 		}
+		
 		return true;
 	}
 
