@@ -62,7 +62,6 @@ class PNH_VipManager
 
 		PNH_VipPackageData pack1 = new PNH_VipPackageData();
 		pack1.NomeDoPacote = "PACOTE_ASSAULT";
-		pack1.AcessoSkinPanel = true;
 		pack1.ItensPermitidos.Insert("M4A1");
 		
 		PNH_VipDonatorData d1 = new PNH_VipDonatorData();
@@ -90,10 +89,8 @@ class PNH_VipManager
 			foreach (PNH_VipPlayerData player : m_Config.Sistema_VIP.JogadoresAtivos)
 			{
 				if (IsDateExpired(player.DataVencimento, curY, curM, curD)) continue;
-				
 				m_ActiveVIPs.Insert(player.Steam64ID, player.Categoria);
 				m_VipExpirationDates.Insert(player.Steam64ID, player.DataVencimento);
-				
 				PNH_VipTierData tier = m_Config.Sistema_VIP.Categorias.Get(player.Categoria);
 				if (tier)
 				{
@@ -117,21 +114,18 @@ class PNH_VipManager
 				foreach (PNH_VipDonatorData donator : package.DoadoresAtivos)
 				{
 					if (IsDateExpired(donator.DataVencimento, curY, curM, curD)) continue;
-					
 					array<string> allowed;
 					if (!m_ActivePrivateItems.Find(donator.Steam64ID, allowed))
 					{
 						allowed = new array<string>;
 						m_ActivePrivateItems.Insert(donator.Steam64ID, allowed);
 					}
-					
 					foreach (string item : package.ItensPermitidos)
 					{
 						string lowAllowed = item;
 						lowAllowed.ToLower();
 						if (allowed.Find(lowAllowed) == -1) allowed.Insert(lowAllowed);
 					}
-					
 					if (package.AcessoSkinPanel) m_SkinPanelAccess.Insert(donator.Steam64ID, true);
 				}
 			}
@@ -145,18 +139,18 @@ class PNH_VipManager
 		if (p.Count() != 3) return true;
 		int eD = p[0].ToInt(); int eM = p[1].ToInt(); int eY = p[2].ToInt();
 		if (cY > eY) return true;
-		if (cY == eY && cM > eM) return true;
+		if (curYear == expYear && curMonth > expMonth) return true;
 		if (cY == eY && cM == eM && cD > eD) return true;
 		return false;
 	}
 
 	bool IsVip(string uid) { return m_ActiveVIPs.Contains(uid); }
+	bool HasQueuePriority(string uid) { return m_QueuePriority.Contains(uid); }
 	bool HasSkinPanelAccess(string uid) { return m_SkinPanelAccess.Contains(uid); }
 	string GetVipExpirationDate(string uid) { string d; m_VipExpirationDates.Find(uid, d); return d; }
 	string GetVipTier(string uid) { string t; m_ActiveVIPs.Find(uid, t); return t; }
 	
-	array<string> GetVipClothing(string uid) 
-	{
+	array<string> GetVipClothing(string uid) {
 		string t = GetVipTier(uid);
 		if (t != "") {
 			PNH_VipTierData td = m_Config.Sistema_VIP.Categorias.Get(t);
@@ -165,8 +159,7 @@ class PNH_VipManager
 		return null;
 	}
 
-	array<string> GetPrivateItems(string uid) 
-	{
+	array<string> GetPrivateItems(string uid) {
 		array<string> items;
 		if (m_ActivePrivateItems.Find(uid, items)) return items;
 		return new array<string>;

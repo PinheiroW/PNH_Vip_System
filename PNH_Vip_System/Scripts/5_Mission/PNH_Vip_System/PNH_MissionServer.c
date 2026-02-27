@@ -10,24 +10,23 @@ modded class MissionServer
 	{
 		super.StartingEquipSetup(player, clothesChosen);
 
-		PlayerIdentity identity = player.GetIdentity();
-		if (identity)
-		{
-			string uid = identity.GetId();
-			PNH_Logger.Log("VIP_System", "Verificando VIP para UID: " + uid);
+		// Damos um pequeno delay para garantir que a Identity do jogador está pronta
+		GetGame().GetCallQueue(CALL_CATEGORY_SYSTEM).CallLater(this.ProcessVipSpawn, 100, false, player);
+	}
 
-			if (PNH_VipManager.GetInstance().IsVip(uid))
+	void ProcessVipSpawn(PlayerBase player)
+	{
+		if (!player || !player.GetIdentity()) return;
+
+		string uid = player.GetIdentity().GetId();
+		if (PNH_VipManager.GetInstance().IsVip(uid))
+		{
+			array<string> items = PNH_VipManager.GetInstance().GetVipClothing(uid);
+			if (items && items.Count() > 0)
 			{
-				array<string> items = PNH_VipManager.GetInstance().GetVipClothing(uid);
-				if (items && items.Count() > 0)
-				{
-					player.RemoveAllItems();
-					foreach (string itm : items) 
-					{ 
-						player.GetInventory().CreateInInventory(itm); 
-					}
-					PNH_Logger.Log("VIP_System", "Roupas VIP entregues para: " + identity.GetName());
-				}
+				player.RemoveAllItems();
+				foreach (string itm : items) { player.GetInventory().CreateInInventory(itm); }
+				PNH_Logger.Log("VIP_System", "Spawn VIP processado: " + player.GetIdentity().GetName());
 			}
 		}
 	}
@@ -41,20 +40,23 @@ modded class MissionServer
 			string uid = identity.GetId();
 
 			// 1. Sincronização do Bloqueio de Itens (RPC 99955)
-			array<string> restrictedList = PNH_VipManager.GetInstance().GetGlobalRestrictedList();
-			array<string> allowedList = PNH_VipManager.GetInstance().GetPrivateItems(uid);
+			ref array<string> restricted = PNH_VipManager.GetInstance().GetGlobalRestrictedList();
+			ref array<string> allowed = PNH_VipManager.GetInstance().GetPrivateItems(uid);
 			
-			auto syncParams = new Param2<array<string>, array<string>>(restrictedList, allowedList);
-			GetGame().RPCSingleParam(player, 99955, syncParams, true, identity);
+			// Declaração simplificada para evitar erro de sintaxe
+			Param2<ref array<string>, ref array<string>> syncData;
+			syncData = new Param2<ref array<string>, ref array<string>>(restricted, allowed);
+			GetGame().RPCSingleParam(player, 99955, syncData, true, identity);
 
-			// 2. Autorização do Painel de Skins (RPC 9991)
-			bool hasSkinAccess = PNH_VipManager.GetInstance().HasSkinPanelAccess(uid);
-			auto skinParams = new Param1<bool>(hasSkinAccess);
+			// 2. Autorização do Painel de Skins (RPC do teu mod de Skin)
+			string skinMod = "PNH_Skin";
+			string skinMethod = "InitData";
+			bool hasAccess = PNH_VipManager.GetInstance().HasSkinPanelAccess(uid);
 			
-			// Usando o RPCManager da tua framework conforme o mod PNH_Skin original
-			PNH_RpcManager.Get().SendRPC("PNH_Skin", "InitData", skinParams, true, identity);
+			Param1<bool> skinParam = new Param1<bool>(hasAccess);
+			PNH_RpcManager.Get().SendRPC(skinMod, skinMethod, skinParam, true, identity);
 			
-			PNH_Logger.Log("VIP_System", "Sincronizacao de permissões enviada para: " + identity.GetName());
+			PNH_Logger.Log("VIP_System", "Permissoes sincronizadas para: " + identity.GetName());
 		}
 	}
 }

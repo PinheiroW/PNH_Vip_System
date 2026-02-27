@@ -13,16 +13,14 @@ modded class PlayerBase
 	{
 		super.OnRPC(sender, rpc_type, ctx);
 		
-		if (GetGame().IsClient())
+		if (GetGame().IsClient() && rpc_type == 99955)
 		{
-			// Sincronização das listas de itens VIP
-			if (rpc_type == 99955)
-			{
-				Param2<array<string>, array<string>> data;
-				if (!ctx.Read(data)) return;
-				m_LocalRestrictedList = data.param1;
-				m_LocalAllowedItems = data.param2;
-			}
+			// Sincronização robusta de listas
+			Param2<ref array<string>, ref array<string>> data = new Param2<ref array<string>, ref array<string>>(null, null);
+			if (!ctx.Read(data)) return;
+			
+			m_LocalRestrictedList = data.param1;
+			m_LocalAllowedItems = data.param2;
 		}
 	}
 
@@ -33,10 +31,10 @@ modded class PlayerBase
 		string itemName = item.GetType();
 		itemName.ToLower();
 
-		// Se o item estiver na lista de restrições globais
+		// Se o item está na lista global de bloqueados
 		if (m_LocalRestrictedList && m_LocalRestrictedList.Find(itemName) != -1)
 		{
-			// Só permite pegar se estiver na lista de permitidos do jogador
+			// Só deixa pegar se o jogador tiver permissão específica
 			if (m_LocalAllowedItems && m_LocalAllowedItems.Find(itemName) != -1) return true;
 			
 			return false; 
