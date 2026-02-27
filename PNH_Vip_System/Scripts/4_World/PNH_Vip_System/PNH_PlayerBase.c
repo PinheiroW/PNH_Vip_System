@@ -1,78 +1,50 @@
-modded class PlayerBase extends ManBase
+modded class PlayerBase
 {	
-	// ==========================================
-	// SISTEMA DE BLOQUEIO DE ITENS PRIVADOS
-	// ==========================================
+	ref array<string> m_LocalRestrictedList; // Itens bloqueados no server
+	ref array<string> m_LocalAllowedItems;    // Itens que EU posso pegar
 
-	// Função auxiliar centralizada para validar permissão
+	void PlayerBase()
+	{
+		m_LocalRestrictedList = new array<string>;
+		m_LocalAllowedItems = new array<string>;
+	}
+
+	// Recebe as listas do servidor via RPC (Sincronização)
+	override void OnRPC(PlayerIdentity sender, int rpc_type, ParamsReadContext ctx)
+	{
+		super.OnRPC(sender, rpc_type, ctx);
+		if (GetGame().IsClient())
+		{
+			if (rpc_type == 99955) // ID Único para nosso mod
+			{
+				Param2<array<string>, array<string>> data;
+				if (!ctx.Read(data)) return;
+				m_LocalRestrictedList = data.param1;
+				m_LocalAllowedItems = data.param2;
+			}
+		}
+	}
+
 	bool CanLootPrivateItem(EntityAI item)
 	{
-		// O bloqueio é sempre validado com autoridade do servidor
-		if (!GetGame().IsServer() || !item || !GetIdentity()) return true;
-
+		if (!item) return true;
 		string itemName = item.GetType();
-		string uid = GetIdentity().GetId();
+		itemName.ToLower();
 
-		// Verifica se o item clicado está na lista global de itens bloqueados
-		if (PNH_VipManager.GetInstance().IsItemRestrictedGlobally(itemName))
+		// Se o item é restrito globalmente
+		if (m_LocalRestrictedList.Find(itemName) != -1)
 		{
-			// Se estiver bloqueado, verifica se ESTE jogador tem permissão
-			array<string> allowedItems = PNH_VipManager.GetInstance().GetPrivateItems(uid);
-			
-			if (allowedItems && allowedItems.Find(itemName) != -1)
-			{
-				return true; // Tem permissão!
-			}
-			
-			// Se chegou aqui, é porque o item é restrito e o cara não tem permissão
+			// Só deixa pegar se estiver na minha lista de permitidos
+			if (m_LocalAllowedItems.Find(itemName) != -1) return true;
 			return false; 
 		}
-
-		// Se o item não está na lista global de restrições, qualquer um pode pegar
-		return true; 
+		return true;
 	}
 
-	override void PredictiveTakeEntityToHands(EntityAI item)
-	{		
-		if (!CanLootPrivateItem(item)) return; // BLOQUEIA
-		super.PredictiveTakeEntityToHands(item);
-	}	
-	
-	override bool PredictiveTakeEntityToTargetAttachmentEx(notnull EntityAI target, notnull EntityAI item, int slot)
-	{				
-		if (!CanLootPrivateItem(item)) return false; // BLOQUEIA
-		return super.PredictiveTakeEntityToTargetAttachmentEx(target, item, slot);
-	}
-	
-	override bool PredictiveTakeToDst(notnull InventoryLocation src, notnull InventoryLocation dst)
-	{
-		EntityAI item = src.GetItem();
-		if (item && !CanLootPrivateItem(item)) return false; // BLOQUEIA
-		
-		return super.PredictiveTakeToDst(src, dst);
-	}
-	
-	override protected bool TakeToDstImpl(InventoryMode mode, notnull InventoryLocation src, notnull InventoryLocation dst)
-	{				
-		if (dst.GetItem() && !CanLootPrivateItem(dst.GetItem())) return false; // BLOQUEIA
-		return super.TakeToDstImpl(mode, src, dst);
-	}	
-	
-	override protected bool TakeEntityAsAttachmentImpl(InventoryMode mode, notnull EntityAI item)
-	{			
-		if (!CanLootPrivateItem(item)) return false; // BLOQUEIA
-		return super.TakeEntityAsAttachmentImpl(mode, item);
-	}	
-	
-	override bool PredictiveSwapEntities(notnull EntityAI item1, notnull EntityAI item2)
-	{
-		if (!CanLootPrivateItem(item1) || !CanLootPrivateItem(item2)) return false; // BLOQUEIA
-		return super.PredictiveSwapEntities(item1, item2);
-	}
-		
-	override bool PredictiveForceSwapEntities(notnull EntityAI item1, notnull EntityAI item2, notnull InventoryLocation item2_dst)
-	{
-		if (!CanLootPrivateItem(item1)) return false; // BLOQUEIA
-		return super.PredictiveForceSwapEntities(item1, item2, item2_dst);
-	}		
+	// Overrides para bloquear todas as formas de interação
+	override void PredictiveTakeEntityToHands(EntityAI item) { if (!CanLootPrivateItem(item)) return; super.PredictiveTakeEntityToHands(item); }
+	override bool PredictiveTakeEntityToTargetAttachmentEx(notnull EntityAI target, notnull EntityAI item, int slot) { if (!CanLootPrivateItem(item)) return false; return super.PredictiveTakeEntityToTargetAttachmentEx(target, item, slot); }
+	override bool PredictiveTakeToDst(notnull InventoryLocation src, notnull InventoryLocation dst) { if (src.GetItem() && !CanLootPrivateItem(src.GetItem())) return false; return super.PredictiveTakeToDst(src, dst); }
+	override protected bool TakeToDstImpl(InventoryMode mode, notnull InventoryLocation src, notnull InventoryLocation dst) { if (dst.GetItem() && !CanLootPrivateItem(dst.GetItem())) return false; return super.TakeToDstImpl(mode, src, dst); }
+	override protected bool TakeEntityAsAttachmentImpl(InventoryMode mode, notnull EntityAI item) { if (!CanLootPrivateItem(item)) return false; return super.TakeEntityAsAttachmentImpl(mode, item); }
 }

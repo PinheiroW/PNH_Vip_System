@@ -3,67 +3,42 @@ modded class MissionServer
 	override void OnInit()
 	{
 		super.OnInit();
-		// Inicia o Manager no arranque do servidor
 		PNH_VipManager.GetInstance();
 	}
 
-	// ==========================================
-	// SISTEMA DE ROUPAS (SPAWN VIP)
-	// ==========================================
 	override void StartingEquipSetup(PlayerBase player, bool clothesChosen)
 	{
 		super.StartingEquipSetup(player, clothesChosen);
 
-		if (player && player.GetIdentity())
+		// Usamos o Identity direto para garantir que o UID seja lido no respawn
+		PlayerIdentity identity = player.GetIdentity();
+		if (identity)
 		{
-			string uid = player.GetIdentity().GetId();
-
-			// Verifica se o jogador tem um Tier VIP válido no Manager (3_Game)
+			string uid = identity.GetId();
 			if (PNH_VipManager.GetInstance().IsVip(uid))
 			{
-				array<string> vipItems = PNH_VipManager.GetInstance().GetVipClothing(uid);
-				
-				if (vipItems && vipItems.Count() > 0)
+				array<string> items = PNH_VipManager.GetInstance().GetVipClothing(uid);
+				if (items && items.Count() > 0)
 				{
-					// Limpa o inventário inicial
 					player.RemoveAllItems();
-					
-					// Spawna os itens definidos no JSON
-					foreach (string itemName : vipItems)
-					{
-						player.GetInventory().CreateInInventory(itemName);
-					}
-					
-					PNH_Logger.Log("VIP_System", "Equipamento VIP entregue a: " + player.GetIdentity().GetName());
+					foreach (string itm : items) { player.GetInventory().CreateInInventory(itm); }
+					PNH_Logger.Log("VIP_System", "Spawn VIP processado para: " + identity.GetName());
 				}
 			}
 		}
 	}
 
-	// ==========================================
-	// MENSAGEM PRIVADA AO ENTRAR
-	// ==========================================
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity)
 	{
 		super.InvokeOnConnect(player, identity);
-
-		if (identity)
+		if (player && identity)
 		{
-			string uid = identity.GetId();
-			
-			// Se o jogador for VIP, envia a confirmação e data de validade
-			if (PNH_VipManager.GetInstance().IsVip(uid))
-			{
-				string dataVencimento = PNH_VipManager.GetInstance().GetVipExpirationDate(uid);
-				string tier = PNH_VipManager.GetInstance().GetVipTier(uid);
-				
-				string msg = "PNH VIP: Status [" + tier + "] ativo ate " + dataVencimento;
-				
-				// Utiliza o ChatController da tua Framework
-				PNH_ChatController.SendPrivateMessage(identity, msg);
-				
-				PNH_Logger.Log("VIP_System", "Jogador VIP conectado: " + identity.GetName() + " (" + tier + ")");
-			}
+			// Envia as listas de restrição para o cliente do jogador sincronizar
+			auto params = new Param2<array<string>, array<string>>(
+				PNH_VipManager.GetInstance().GetGlobalRestrictedList(),
+				PNH_VipManager.GetInstance().GetPrivateItems(identity.GetId())
+			);
+			GetGame().RPCSingleParam(player, 99955, params, true, identity);
 		}
 	}
 }
