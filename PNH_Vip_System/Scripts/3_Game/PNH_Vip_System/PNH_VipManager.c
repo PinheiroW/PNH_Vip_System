@@ -89,14 +89,19 @@ class PNH_VipManager
 		{
 			foreach (PNH_VipPlayerData player : m_Config.Sistema_VIP.JogadoresAtivos)
 			{
+				string cleanUID = player.Steam64ID;
+				cleanUID.Trim(); // Remove espaços acidentais
+
 				if (IsDateExpired(player.DataVencimento, cY, cM, cD)) continue;
-				m_ActiveVIPs.Insert(player.Steam64ID, player.Categoria);
-				m_VipExpirationDates.Insert(player.Steam64ID, player.DataVencimento);
+				
+				m_ActiveVIPs.Insert(cleanUID, player.Categoria);
+				m_VipExpirationDates.Insert(cleanUID, player.DataVencimento);
+				
 				PNH_VipTierData tier = m_Config.Sistema_VIP.Categorias.Get(player.Categoria);
 				if (tier)
 				{
-					if (tier.FilaPrioridade) m_QueuePriority.Insert(player.Steam64ID, true);
-					if (tier.AcessoSkinPanel) m_SkinPanelAccess.Insert(player.Steam64ID, true);
+					if (tier.FilaPrioridade) m_QueuePriority.Insert(cleanUID, true);
+					if (tier.AcessoSkinPanel) m_SkinPanelAccess.Insert(cleanUID, true);
 				}
 			}
 		}
@@ -114,12 +119,16 @@ class PNH_VipManager
 
 				foreach (PNH_VipDonatorData donator : package.DoadoresAtivos)
 				{
+					string dUID = donator.Steam64ID;
+					dUID.Trim();
+
 					if (IsDateExpired(donator.DataVencimento, cY, cM, cD)) continue;
+					
 					array<string> allowed;
-					if (!m_ActivePrivateItems.Find(donator.Steam64ID, allowed))
+					if (!m_ActivePrivateItems.Find(dUID, allowed))
 					{
 						allowed = new array<string>;
-						m_ActivePrivateItems.Insert(donator.Steam64ID, allowed);
+						m_ActivePrivateItems.Insert(dUID, allowed);
 					}
 					foreach (string item : package.ItensPermitidos)
 					{
@@ -127,10 +136,11 @@ class PNH_VipManager
 						lowAllowed.ToLower();
 						if (allowed.Find(lowAllowed) == -1) allowed.Insert(lowAllowed);
 					}
-					if (package.AcessoSkinPanel) m_SkinPanelAccess.Insert(donator.Steam64ID, true);
+					if (package.AcessoSkinPanel) m_SkinPanelAccess.Insert(dUID, true);
 				}
 			}
 		}
+		PNH_Logger.Log("VIP_System", "Configuracoes processadas com sucesso.");
 	}
 
 	bool IsDateExpired(string dateStr, int cY, int cM, int cD)
@@ -139,7 +149,6 @@ class PNH_VipManager
 		dateStr.Split("/", p);
 		if (p.Count() != 3) return true;
 		int eD = p[0].ToInt(); int eM = p[1].ToInt(); int eY = p[2].ToInt();
-		
 		if (cY > eY) return true;
 		if (cY == eY && cM > eM) return true;
 		if (cY == eY && cM == eM && cD > eD) return true;
