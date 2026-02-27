@@ -3,7 +3,7 @@ modded class MissionServer
 	override void OnInit()
 	{
 		super.OnInit();
-		// Inicia o Manager silenciosamente no arranque
+		// Inicia o Manager no arranque do servidor
 		PNH_VipManager.GetInstance();
 	}
 
@@ -18,30 +18,30 @@ modded class MissionServer
 		{
 			string uid = player.GetIdentity().GetId();
 
-			// Verifica se o jogador tem um Tier VIP válido
+			// Verifica se o jogador tem um Tier VIP válido no Manager (3_Game)
 			if (PNH_VipManager.GetInstance().IsVip(uid))
 			{
 				array<string> vipItems = PNH_VipManager.GetInstance().GetVipClothing(uid);
 				
 				if (vipItems && vipItems.Count() > 0)
 				{
-					// Remove as roupas vanilla (fresh spawn) para não encavalar
+					// Limpa o inventário inicial
 					player.RemoveAllItems();
 					
-					// Entrega os itens listados no JSON
+					// Spawna os itens definidos no JSON
 					foreach (string itemName : vipItems)
 					{
 						player.GetInventory().CreateInInventory(itemName);
 					}
 					
-					PNH_Logger.Log("VIP_System", "Roupas VIP entregues para: " + player.GetIdentity().GetName());
+					PNH_Logger.Log("VIP_System", "Equipamento VIP entregue a: " + player.GetIdentity().GetName());
 				}
 			}
 		}
 	}
 
 	// ==========================================
-	// MENSAGEM PRIVADA & FILA DE PRIORIDADE
+	// MENSAGEM PRIVADA AO ENTRAR
 	// ==========================================
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity)
 	{
@@ -51,24 +51,18 @@ modded class MissionServer
 		{
 			string uid = identity.GetId();
 			
-			// 1. SISTEMA DE FILA DE PRIORIDADE
-			// Ao setar aqui, o motor do jogo reconhece a prioridade deste UID
-			if (PNH_VipManager.GetInstance().HasQueuePriority(uid))
-			{
-				identity.SetReservedSlot(true);
-				PNH_Logger.Log("VIP_System", "Jogador usou Fila de Prioridade: " + identity.GetName());
-			}
-
-			// 2. MENSAGEM DE BOAS VINDAS VIP
+			// Se o jogador for VIP, envia a confirmação e data de validade
 			if (PNH_VipManager.GetInstance().IsVip(uid))
 			{
 				string dataVencimento = PNH_VipManager.GetInstance().GetVipExpirationDate(uid);
 				string tier = PNH_VipManager.GetInstance().GetVipTier(uid);
 				
-				string msg = "Bem-vindo de volta! O seu status [" + tier + "] e valido ate: " + dataVencimento;
+				string msg = "PNH VIP: Status [" + tier + "] ativo ate " + dataVencimento;
 				
-				// Disparando via Framework
+				// Utiliza o ChatController da tua Framework
 				PNH_ChatController.SendPrivateMessage(identity, msg);
+				
+				PNH_Logger.Log("VIP_System", "Jogador VIP conectado: " + identity.GetName() + " (" + tier + ")");
 			}
 		}
 	}
