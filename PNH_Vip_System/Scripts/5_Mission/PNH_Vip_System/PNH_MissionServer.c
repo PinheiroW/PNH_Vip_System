@@ -41,26 +41,7 @@ modded class MissionServer
 	}
 
 	// ==========================================
-	// SISTEMA DE FILA DE PRIORIDADE
-	// ==========================================
-	override void OnPreConnect(PlayerIdentity identity, out string uid_to_kick)
-	{
-		super.OnPreConnect(identity, uid_to_kick);
-
-		// O método OnPreConnect pode ser chamado antes de o jogador ter um identity completo,
-		// então capturamos o UID da forma bruta por segurança.
-		string uid = identity.GetId();
-
-		if (PNH_VipManager.GetInstance().HasQueuePriority(uid))
-		{
-			// Isso joga o jogador para o topo da fila (padrão nativo do DayZ Reserved Slots)
-			identity.SetReservedSlot(true);
-			PNH_Logger.Log("VIP_System", "Jogador usou Fila de Prioridade: " + identity.GetName());
-		}
-	}
-
-	// ==========================================
-	// MENSAGEM PRIVADA AO LOGAR
+	// MENSAGEM PRIVADA & FILA DE PRIORIDADE
 	// ==========================================
 	override void InvokeOnConnect(PlayerBase player, PlayerIdentity identity)
 	{
@@ -70,7 +51,15 @@ modded class MissionServer
 		{
 			string uid = identity.GetId();
 			
-			// Se o jogador é VIP de Tier, mandamos o status
+			// 1. SISTEMA DE FILA DE PRIORIDADE
+			// Ao setar aqui, o motor do jogo reconhece a prioridade deste UID
+			if (PNH_VipManager.GetInstance().HasQueuePriority(uid))
+			{
+				identity.SetReservedSlot(true);
+				PNH_Logger.Log("VIP_System", "Jogador usou Fila de Prioridade: " + identity.GetName());
+			}
+
+			// 2. MENSAGEM DE BOAS VINDAS VIP
 			if (PNH_VipManager.GetInstance().IsVip(uid))
 			{
 				string dataVencimento = PNH_VipManager.GetInstance().GetVipExpirationDate(uid);
@@ -78,7 +67,7 @@ modded class MissionServer
 				
 				string msg = "Bem-vindo de volta! O seu status [" + tier + "] e valido ate: " + dataVencimento;
 				
-				// Disparando via Framework (se você configurou o ChatController)
+				// Disparando via Framework
 				PNH_ChatController.SendPrivateMessage(identity, msg);
 			}
 		}
